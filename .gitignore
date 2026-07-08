@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+data/
+logs/
+telegram_config.json
+telegram_report_dry.txt
+.env
+venv/
+.venv/
