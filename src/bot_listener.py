@@ -1,4 +1,5 @@
-import os, sys, json, asyncio, warnings, logging
+import os, sys, json, asyncio, warnings, logging, threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -88,6 +89,20 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("report", report))
     app.add_handler(CommandHandler("help", help_cmd))
+
+    def health_server():
+        class H(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"ok")
+            def log_message(self, *a):
+                pass
+        port = int(os.environ.get("PORT", 10000))
+        HTTPServer(("0.0.0.0", port), H).serve_forever()
+
+    threading.Thread(target=health_server, daemon=True).start()
+    logging.info("Health server started on port %s", os.environ.get("PORT", 10000))
 
     logging.info("Bot started. Listening for commands...")
     app.run_polling()

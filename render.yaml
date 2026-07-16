@@ -1,6 +1,7 @@
 services:
-  - type: worker
+  - type: web
     name: nifty-bot
+    healthCheckPath: /
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python src/bot_listener.py
