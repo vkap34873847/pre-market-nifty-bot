@@ -23,6 +23,20 @@ LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 SCHEDULE_HOUR = 8
 SCHEDULE_MIN = 45
 
+# Known NSE holidays for 2026 (non-exhaustive — expand as needed)
+NSE_HOLIDAYS_2026 = {
+    "2026-01-26",  # Republic Day
+    "2026-03-27",  # Holi
+    "2026-04-14",  # Dr Ambedkar Jayanti / Tamil New Year
+    "2026-04-18",  # Good Friday
+    "2026-05-01",  # Maharashtra Day
+    "2026-08-17",  # Independence Day (observed)
+    "2026-10-02",  # Gandhi Jayanti
+    "2026-11-16",  # Diwali
+    "2026-11-17",  # Diwali Balipratipada
+    "2026-12-25",  # Christmas
+}
+
 os.makedirs(LOG_DIR, exist_ok=True)
 
 logging.basicConfig(
@@ -91,6 +105,14 @@ async def send_scheduled_report(bot, chat_id):
         wait_sec = (target - now_ist).total_seconds()
         logging.info(f"Next scheduled report at {target.strftime('%H:%M')} IST (in {wait_sec/60:.0f} min)")
         await asyncio.sleep(wait_sec)
+
+        today_str = datetime.now(ist).strftime("%Y-%m-%d")
+        is_weekend = datetime.now(ist).weekday() >= 5
+        is_holiday = today_str in NSE_HOLIDAYS_2026
+        if is_weekend or is_holiday:
+            reason = "weekend" if is_weekend else f"holiday ({today_str})"
+            logging.info(f"Skipping report — {reason}")
+            continue
 
         try:
             report_text = generate_report()
