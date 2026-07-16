@@ -62,9 +62,17 @@ def generate_report():
     model = xgb.XGBClassifier()
     model.load_model(MODEL_PATH)
 
-    row = build_today_features()
+    import io
+    old_out = sys.stdout
+    sys.stdout = buf = io.StringIO()
+    try:
+        row = build_today_features()
+    finally:
+        sys.stdout = old_out
+    build_log = buf.getvalue()
+
     if row is None:
-        return "Failed to build features."
+        return f"Failed to build features.\n\n<pre>{build_log}</pre>"
 
     fv = np.array([[row.get(c, np.nan) for c in FEATURE_COLS]])
     proba = model.predict_proba(pd.DataFrame(fv, columns=FEATURE_COLS))[0]
