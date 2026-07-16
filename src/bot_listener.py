@@ -121,10 +121,10 @@ async def send_scheduled_report(bot, chat_id):
         except Exception as e:
             logging.exception(f"Scheduled report failed: {e}")
 
-def scheduler_thread(bot):
+def scheduler_thread(bot, chat_id):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(send_scheduled_report(bot))
+    loop.run_until_complete(send_scheduled_report(bot, chat_id))
 
 def main():
     try:
@@ -141,7 +141,7 @@ def main():
     app.add_handler(CommandHandler("help", help_cmd))
 
     if admin_chat_id:
-        t = threading.Thread(target=scheduler_thread, args=(app.bot,), daemon=True)
+        t = threading.Thread(target=scheduler_thread, args=(app.bot, admin_chat_id), daemon=True)
         t.start()
         logging.info(f"Scheduled daily report at {SCHEDULE_HOUR:02d}:{SCHEDULE_MIN:02d} IST")
     else:
