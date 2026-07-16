@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -19,6 +19,9 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "xgboost_model.json")
 CONFIG_PATH = os.path.join(PROJECT_ROOT, "telegram_config.json")
 LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
+
+SCHEDULE_HOUR = 8
+SCHEDULE_MIN = 45
 
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -33,12 +36,13 @@ logging.basicConfig(
 
 def load_config():
     bot_token = os.environ.get("BOT_TOKEN")
+    chat_id = os.environ.get("CHAT_ID")
     if not bot_token:
         if not os.path.exists(CONFIG_PATH):
             raise ValueError("Set BOT_TOKEN env var or create telegram_config.json")
         with open(CONFIG_PATH) as f:
             return json.load(f)
-    return {"bot_token": bot_token}
+    return {"bot_token": bot_token, "chat_id": int(chat_id) if chat_id else None}
 
 def generate_report():
     model = xgb.XGBClassifier()
@@ -77,10 +81,34 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/help - Show this message"
     )
 
+async def send_scheduled_report(bot, chat_id):
+    ist = timezone(timedelta(hours=5, minutes=30))
+    while True:
+        now_ist = datetime.now(ist)
+        target = now_ist.replace(hour=SCHEDULE_HOUR, minute=SCHEDULE_MIN, second=0, microsecond=0)
+        if now_ist >= target:
+            target += timedelta(days=1)
+        wait_sec = (target - now_ist).total_seconds()
+        logging.info(f"Next scheduled report at {target.strftime('%H:%M')} IST (in {wait_sec/60:.0f} min)")
+        await asyncio.sleep(wait_sec)
+
+        try:
+            report_text = generate_report()
+            await bot.send_message(chat_id=chat_id, text=report_text, parse_mode="HTML")
+            logging.info("Scheduled report sent successfully.")
+        except Exception as e:
+            logging.exception(f"Scheduled report failed: {e}")
+
+def scheduler_thread(bot):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(send_scheduled_report(bot))
+
 def main():
     try:
         config = load_config()
         token = config["bot_token"]
+        admin_chat_id = config.get("chat_id")
     except Exception as e:
         logging.error(f"Config error: {e}")
         sys.exit(1)
@@ -89,6 +117,13 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("report", report))
     app.add_handler(CommandHandler("help", help_cmd))
+
+    if admin_chat_id:
+        t = threading.Thread(target=scheduler_thread, args=(app.bot,), daemon=True)
+        t.start()
+        logging.info(f"Scheduled daily report at {SCHEDULE_HOUR:02d}:{SCHEDULE_MIN:02d} IST")
+    else:
+        logging.warning("No CHAT_ID configured, skipping scheduled report.")
 
     def health_server():
         class H(BaseHTTPRequestHandler):
