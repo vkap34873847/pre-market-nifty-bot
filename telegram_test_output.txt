@@ -1,0 +1,20 @@
+﻿python : Fetching live data from yfinance...
+At line:1 char:1
++ python src/telegram_reporter.py --dry-run 2>&1 | Out-File -FilePath t ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Fetching live data from yfinance...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  nifty      (^NSEI       ): 2026-07-06 close=24430.35
+  vix        (^INDIAVIX   ): 2026-07-06 close=11.82
+  usdinr     (USDINR=X    ): 2026-07-07 close=94.96
+  crude      (CL=F        ): 2026-07-07 close=71.91
+  nikkei     (^N225       ): 2026-07-06 close=69737.69
+  hsi        (^HSI        ): 2026-07-06 close=23616.32
+  shanghai   (000001.SS   ): 2026-07-07 close=N/A
+  sp500      (^GSPC       ): 2026-07-07 close=7503.85
+  nasdaq     (^IXIC       ): 2026-07-07 close=25818.69
+
+Today: 2026-07-08
+
+Fetching GIFT Nifty gap from giftnifty.com...

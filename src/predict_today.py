@@ -37,15 +37,16 @@ YF_SYMBOLS = {
     "nasdaq": "^IXIC",
 }
 
-def fetch_yf(symbol, period="5d"):
+def fetch_yf(symbol, period="1mo"):
     try:
         ticker = yf.Ticker(symbol)
         df = ticker.history(period=period)
-        if df.empty or len(df) < 2:
+        if df.empty or len(df) < 1:
             return None
         df.index = pd.to_datetime(df.index.date)
         return df
-    except:
+    except Exception as e:
+        print(f"fetch_yf({symbol}) failed: {e}")
         return None
 
 def build_today_features(gift_gap_override=None):
