@@ -17,12 +17,15 @@ from src.telegram_reporter import format_report
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "xgboost_model.json")
 CONFIG_PATH = os.path.join(PROJECT_ROOT, "telegram_config.json")
+LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler(os.path.join(PROJECT_ROOT, "logs", "bot_listener.log")),
+        logging.FileHandler(os.path.join(LOG_DIR, "bot_listener.log")),
         logging.StreamHandler(),
     ],
 )
