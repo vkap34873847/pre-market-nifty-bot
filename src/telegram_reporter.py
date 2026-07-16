@@ -9,7 +9,7 @@ from src.gift_nifty_scraper import get_gift_nifty_gap
 
 import numpy as np
 import xgboost as xgb
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 import pandas as pd
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,8 +37,10 @@ def format_report(row, proba, pred_class):
     layers_agree = (pred_label == "BULLISH" and row["gift_gap_pct"] > 0) or (pred_label == "BEARISH" and row["gift_gap_pct"] < 0)
     gap_pct = row["gift_gap_pct"] * 100
 
-    today_str = date.today().strftime("%d %b %Y")
-    weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.today().weekday()]
+    ist = timezone(timedelta(hours=5, minutes=30))
+    ist_now = datetime.now(ist)
+    today_str = ist_now.strftime("%d %b %Y")
+    weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][ist_now.weekday()]
 
     lines = []
     lines.append(f"\U0001F4CA <b>Pre-Market Report  |  {today_str} ({weekday})</b>")
@@ -80,7 +82,7 @@ def format_report(row, proba, pred_class):
             lines.append(f"  <code>{c}</code>: {val:.2f}")
 
     lines.append("")
-    lines.append(f"\U0001F4E2 Auto-generated at {datetime.now().strftime('%H:%M')} IST")
+    lines.append(f"\U0001F4E2 Auto-generated at {datetime.now(ist).strftime('%H:%M')} IST")
     lines.append("#nifty #premarket #giftnifty")
 
     return "\n".join(lines)
